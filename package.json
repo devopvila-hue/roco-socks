@@ -1,0 +1,16 @@
+{
+  "name": "roco-socks",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Roco Socks — calcetines personalizados para particulares y empresas",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview --host 127.0.0.1 --port 4173",
+    "test": "node --test test/*.test.mjs --test-reporter=spec"
+  },
+  "devDependencies": {
+    "vite": "^5.4.10"
+  }
+}
