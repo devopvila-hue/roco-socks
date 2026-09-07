@@ -17,6 +17,9 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      VITE_BASE: /roco-socks/
+      VITE_API_BASE: https://api.roco-socks.164.68.100.183.sslip.io
     steps:
       - name: Checkout
         uses: actions/checkout@v4

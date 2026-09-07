@@ -1,6 +1,6 @@
-// Tests mínimos automatizados para Roco Socks web.
-// Ejecutar: node --test test/
-// Verifican la integridad del HTML/CSS/JS sin necesidad de red.
+// Tests mínimos del frontend Roco Socks.
+// Ejecutar: node --test test/*.test.mjs
+// Verifican la integridad del proyecto React sin red.
 
 import { test } from "node:test";
 import { strict as assert } from "node:assert";
@@ -17,67 +17,71 @@ function load(rel) {
   return readFileSync(p, "utf8");
 }
 
-test("package.json expone scripts mínimos", () => {
+test("package.json expone scripts mínimos y dependencias React", () => {
   const pkg = JSON.parse(load("package.json"));
-  assert.equal(pkg.type, "module");
   for (const script of ["dev", "build", "preview", "test"]) {
     assert.ok(pkg.scripts[script], `falta script: ${script}`);
   }
-  assert.ok(pkg.devDependencies.vite, "vite debe estar como devDependency");
+  assert.ok(pkg.dependencies.react, "react debe estar como dependencia");
+  assert.ok(pkg.dependencies["react-router-dom"], "react-router-dom debe estar");
+  assert.ok(pkg.devDependencies["@vitejs/plugin-react"], "plugin-react debe estar");
 });
 
-test("index.html tiene las secciones requeridas por la misión", () => {
+test("vite.config.js usa @vitejs/plugin-react y base path", () => {
+  const cfg = load("vite.config.js");
+  assert.ok(cfg.includes("@vitejs/plugin-react"), "debe usar plugin-react");
+  assert.ok(cfg.includes("base"), "debe configurar base path");
+});
+
+test("index.html apunta a /src/main.jsx (entry React)", () => {
   const html = load("index.html");
-  assert.ok(html, "index.html debe existir");
-  const required = [
-    "#producto",
-    "#ejemplos",
-    "#empresas",
-    "#proceso",
-    "#contacto",
-  ];
-  for (const sel of required) {
-    assert.ok(
-      html.includes(`id="${sel.slice(1)}"`),
-      `falta sección ${sel} en index.html`,
-    );
-  }
-  // CTA claro
-  assert.match(html, /Pide presupuesto/i, "debe haber un CTA de presupuesto");
-  // form de contacto
-  assert.match(html, /<form[^>]*data-contact-form/, "debe haber un formulario");
+  assert.match(html, /\/src\/main\.jsx/, "debe cargar main.jsx");
+  assert.match(html, /<div id="root">/, "debe tener root div");
 });
 
-test("CSS referencia variables modernas y responsive", () => {
+test("Todas las páginas existen", () => {
+  const pages = [
+    "Home.jsx", "Products.jsx", "ProductDetail.jsx", "Cart.jsx",
+    "Login.jsx", "Register.jsx", "ForgotPassword.jsx", "ResetPassword.jsx",
+    "Account.jsx", "Orders.jsx", "OrderDetail.jsx", "Checkout.jsx",
+  ];
+  for (const p of pages) {
+    assert.ok(existsSync(resolve(root, `src/pages/${p}`)), `falta página ${p}`);
+  }
+});
+
+test("Contextos React existen", () => {
+  for (const c of ["AuthContext", "CartContext", "ToastContext"]) {
+    assert.ok(existsSync(resolve(root, `src/contexts/${c}.jsx`)), `falta contexto ${c}`);
+  }
+});
+
+test("API client llama a /api endpoints", () => {
+  const api = load("src/api/client.js");
+  assert.ok(api.includes("/api/auth/me"));
+  assert.ok(api.includes("/api/products"));
+  assert.ok(api.includes("/api/cart"));
+  assert.ok(api.includes("/api/orders"));
+  assert.ok(api.includes("credentials: \"include\""), "debe enviar cookies");
+});
+
+test("Componentes base existen", () => {
+  for (const c of ["Header", "Footer", "ProductVisual", "RequireAuth"]) {
+    assert.ok(existsSync(resolve(root, `src/components/${c}.jsx`)), `falta componente ${c}`);
+  }
+});
+
+test("CSS responsive y accesible", () => {
   const css = load("src/styles.css");
-  assert.ok(css.includes(":root"), "debe haber un bloque :root con variables");
+  assert.ok(css.includes(":root"), "debe haber :root con variables");
   assert.match(css, /@media\s*\(max-width:\s*860px\)/, "debe haber breakpoints responsive");
   assert.match(css, /prefers-reduced-motion/, "debe respetar prefers-reduced-motion");
+  assert.match(css, /:focus-visible/, "debe definir focus visible");
 });
 
-test("JS exporta interactividad mínima", () => {
-  const js = load("src/main.js");
-  for (const item of [
-    "[data-header]",
-    "[data-nav-toggle]",
-    "[data-nav]",
-    "[data-contact-form]",
-    "[data-year]",
-  ]) {
-    assert.ok(js.includes(item), `JS debe manejar ${item}`);
-  }
-  // El formulario debe prevenir submit por defecto (usa mailto:)
-  assert.match(js, /event\.preventDefault\(\)/, "form debe prevenir submit nativo");
-});
-
-test("Archivo .gitignore existe y cubre node_modules/dist", () => {
+test(".gitignore cubre dist y node_modules", () => {
   const gi = load(".gitignore");
-  assert.ok(gi.includes("node_modules/"), "debe ignorar node_modules");
-  assert.ok(gi.includes("dist/"), "debe ignorar dist");
-});
-
-test("vite.config.js existe y apunta al host loopback", () => {
-  const cfg = load("vite.config.js");
-  assert.ok(cfg.includes('host: "127.0.0.1"'));
-  assert.ok(cfg.includes('port: 5173'));
+  assert.ok(gi.includes("node_modules/"));
+  assert.ok(gi.includes("dist/"));
+  assert.ok(gi.includes(".env"));
 });
