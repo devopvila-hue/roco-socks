@@ -6,7 +6,7 @@
   "description": "Roco Socks — tienda online (React + Vite)",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "vite build && node scripts/postbuild.mjs",
     "preview": "vite preview --host 127.0.0.1 --port 4173",
     "test": "node --test test/*.test.mjs"
   },
